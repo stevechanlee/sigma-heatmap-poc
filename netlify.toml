@@ -1,0 +1,31 @@
+# Netlify configuration for Sigma Plugin
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+# Headers for plugin security and CORS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "ALLOWALL"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Ensure proper MIME types
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+
+[[headers]]
+  for = "*.json"
+  [headers.values]
+    Content-Type = "application/json"
+
+# Redirect rules if needed
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
+  force = false

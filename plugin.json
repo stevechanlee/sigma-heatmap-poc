@@ -1,0 +1,12 @@
+{
+  "name": "Risk Bubble Heatmap Plugin",
+  "description": "A custom risk bubble heatmap visualization for Sigma - displays risk data as bubbles on gradient background",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "main": "index.html",
+  "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iOCIgY3k9IjgiIHI9IjQiIGZpbGw9IiM3RUQzMjEiLz4KPGNpcmNsZSBjeD0iMTYiIGN5PSI4IiByPSIzIiBmaWxsPSIjRkY2QjZCIi8+CjxjaXJjbGUgY3g9IjEyIiBjeT0iMTYiIHI9IjUiIGZpbGw9IiMyN0I2NUEiLz4KPC9zdmc+",
+  "permissions": {
+    "elements": true,
+    "columns": true
+  }
+}

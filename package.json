@@ -1,0 +1,22 @@
+{
+  "name": "sigma-heatmap-plugin",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && cp plugin.json dist/",
+    "preview": "vite preview",
+    "build:plugin": "vite build && cp plugin.json dist/ && echo 'Plugin built successfully. Upload the dist folder to Sigma.'",
+    "deploy": "npm run build && echo 'Built successfully! Deploy the dist folder to Netlify.'"
+  },
+  "devDependencies": {
+    "vite": "^7.1.7"
+  },
+  "dependencies": {
+    "@sigmacomputing/plugin": "^1.0.9",
+    "d3": "^7.9.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
