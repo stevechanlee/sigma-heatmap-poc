@@ -22,10 +22,8 @@
   [headers.values]
     Content-Type = "application/json"
 
-# Redirect rules if needed
+# Single page app routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  conditions = {Role = ["admin"]}
-  force = false
