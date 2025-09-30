@@ -3,7 +3,7 @@ import React, { useMemo, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { useConfig, useEditorPanelConfig, useElementColumns, useElementData } from "@sigmacomputing/plugin";
 
-function renderBubbleHeatmap(data, config = {}) {
+function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
   const container = d3.select("#heatmapContainer");
   container.selectAll("*").remove();
 
@@ -119,14 +119,14 @@ function renderBubbleHeatmap(data, config = {}) {
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text(config.y_axis_label || "Average Likelihood");
+    .text(config.y_axis_label || columnNames.yAxis || "Likelihood");
 
   svg.append("text")
     .attr("transform", `translate(${width / 2}, ${height - 10})`)
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text(config.x_axis_label || "Average Impact");
+    .text(config.x_axis_label || columnNames.xAxis || "Impact");
 
   // Add heatmap title
   svg.append("text")
@@ -199,8 +199,12 @@ function BubbleHeatmapPlugin() {
 
   // Render the heatmap when data changes
   useEffect(() => {
-    renderBubbleHeatmap(data, config);
-  }, [data, config]);
+    const columnNames = {
+      xAxis: (columnInfo && columnInfo[config["x-axis"]] && columnInfo[config["x-axis"]].name) || config["x-axis"] || "Impact",
+      yAxis: (columnInfo && columnInfo[config["y-axis"]] && columnInfo[config["y-axis"]].name) || config["y-axis"] || "Likelihood"
+    };
+    renderBubbleHeatmap(data, config, columnNames);
+  }, [data, config, columnInfo]);
 
   return null; // React component doesn't render anything directly
 }
