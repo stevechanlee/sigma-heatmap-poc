@@ -3,7 +3,7 @@ import React, { useMemo, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { useConfig, useEditorPanelConfig, useElementColumns, useElementData } from "@sigmacomputing/plugin";
 
-function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
+function renderBubbleHeatmap(data, config = {}, columnNames = {}, sourceInfo = {}) {
   const container = d3.select("#heatmapContainer");
   container.selectAll("*").remove();
 
@@ -134,7 +134,7 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
     .style("text-anchor", "middle")
     .style("font-size", "16px")
     .style("font-weight", "bold")
-    .text(config.heatmap_title || "Risk Heatmap");
+    .text(config.heatmap_title || `${sourceInfo.name || "Data"} Heatmap`);
 
   // Notify Sigma about height changes
   queueMicrotask(() => {
@@ -200,10 +200,15 @@ function BubbleHeatmapPlugin() {
   // Render the heatmap when data changes
   useEffect(() => {
     const columnNames = {
-      xAxis: (columnInfo && columnInfo[config["x-axis"]] && columnInfo[config["x-axis"]].name) || config["x-axis"] || "Impact",
-      yAxis: (columnInfo && columnInfo[config["y-axis"]] && columnInfo[config["y-axis"]].name) || config["y-axis"] || "Likelihood"
+      xAxis: (columnInfo && columnInfo[config["x-axis"]] && columnInfo[config["x-axis"]].name) || config["x-axis"],
+      yAxis: (columnInfo && columnInfo[config["y-axis"]] && columnInfo[config["y-axis"]].name) || config["y-axis"]
     };
-    renderBubbleHeatmap(data, config, columnNames);
+    
+    const sourceInfo = {
+      name: config.source || "Data"
+    };
+    
+    renderBubbleHeatmap(data, config, columnNames, sourceInfo);
   }, [data, config, columnInfo]);
 
   return null; // React component doesn't render anything directly
