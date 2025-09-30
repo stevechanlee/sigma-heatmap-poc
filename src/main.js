@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import React, { useMemo, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { useConfig, useEditorPanelConfig, useElementColumns, useElementData } from "@sigmacomputing/plugin";
+import heatmapBg from "/heatmap-bg.png";
 
 function renderBubbleHeatmap(data) {
   const container = d3.select("#heatmapContainer");
@@ -43,7 +44,7 @@ function renderBubbleHeatmap(data) {
     .style("left", margin.left + "px")
     .style("width", (width - margin.left - margin.right) + "px")
     .style("height", (height - margin.top - margin.bottom) + "px")
-    .style("background-image", "url('/heatmap-bg.png')")
+    .style("background-image", `url(${heatmapBg})`)
     .style("background-size", "cover")
     .style("background-position", "center")
     .style("background-repeat", "no-repeat")
