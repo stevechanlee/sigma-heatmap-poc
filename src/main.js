@@ -34,35 +34,18 @@ function renderBubbleHeatmap(data) {
     return;
   }
 
-  // Create background gradient heatmap
-  const defs = svg.append("defs");
-  
-  // Create gradient from green (low risk) to red (high risk)
-  const gradient = defs.append("linearGradient")
-    .attr("id", "heatmapGradient")
-    .attr("x1", "0%")
-    .attr("y1", "100%")
-    .attr("x2", "100%")
-    .attr("y2", "0%");
-
-  gradient.append("stop")
-    .attr("offset", "0%")
-    .style("stop-color", "#7ED321") // Green (low risk)
-    .style("stop-opacity", 0.3);
-
-  gradient.append("stop")
-    .attr("offset", "100%")
-    .style("stop-color", "#FF6B6B") // Red (high risk)
-    .style("stop-opacity", 0.7);
-
-  // Add background rectangle with gradient
-  svg.append("rect")
-    .attr("x", margin.left)
-    .attr("y", margin.top)
-    .attr("width", width - margin.left - margin.right)
-    .attr("height", height - margin.top - margin.bottom)
-    .attr("fill", "url(#heatmapGradient)")
-    .attr("class", "heatmap-background");
+  // Create background gradient heatmap that matches the original design
+  const backgroundDiv = d3.select("#heatmapContainer")
+    .insert("div", "svg")
+    .attr("class", "heatmap-background")
+    .style("position", "absolute")
+    .style("top", margin.top + "px")
+    .style("left", margin.left + "px")
+    .style("width", (width - margin.left - margin.right) + "px")
+    .style("height", (height - margin.top - margin.bottom) + "px")
+    .style("background", "linear-gradient(135deg, #7ED321 0%, #A8E842 25%, #D4E842 40%, #F5E623 55%, #FFB366 75%, #FF8B66 85%, #FF6B6B 100%)")
+    .style("opacity", "0.8")
+    .style("z-index", "1");
 
   // Create scales
   const xScale = d3.scaleLinear()
