@@ -78,7 +78,26 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
   // Calculate opacity based on risk values
   const maxRisk = d3.max(validData, d => d.risk) || 1;
 
-  // Add bubbles
+  // Create tooltip div
+  const tooltip = d3.select("body")
+    .selectAll(".heatmap-tooltip")
+    .data([null])
+    .join("div")
+    .attr("class", "heatmap-tooltip")
+    .style("position", "absolute")
+    .style("background", "rgba(45, 45, 45, 0.95)")
+    .style("color", "white")
+    .style("padding", "12px")
+    .style("border-radius", "6px")
+    .style("font-size", "14px")
+    .style("font-family", "system-ui, sans-serif")
+    .style("line-height", "1.4")
+    .style("box-shadow", "0 4px 12px rgba(0,0,0,0.3)")
+    .style("pointer-events", "none")
+    .style("opacity", 0)
+    .style("z-index", 1000);
+
+  // Add bubbles with hover events
   const bubbles = svg.selectAll(".bubble")
     .data(validData)
     .join("circle")
@@ -89,7 +108,63 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
     .attr("fill", d => d.color || "#27B65A")
     .attr("opacity", d => Math.max(0.4, Math.min(0.9, (d.risk || 0) / maxRisk)))
     .attr("stroke", "#000")
-    .attr("stroke-width", 1);
+    .attr("stroke-width", 1)
+    .style("cursor", "pointer")
+    .on("mouseover", function(event, d) {
+      // Show tooltip
+      tooltip.transition()
+        .duration(200)
+        .style("opacity", 1);
+      
+      // Format tooltip content dynamically based on available data and column names
+      let content = `<div style="font-weight: bold; margin-bottom: 8px; color: #fff;">${d.label}</div>`;
+      
+      // Add X-axis info
+      if (d.impact !== undefined && d.impact !== null) {
+        content += `<div style="margin-bottom: 4px;">${columnNames.xAxis || 'X-Axis'}: <span style="color: #ccc;">${d.impact}</span></div>`;
+      }
+      
+      // Add Y-axis info  
+      if (d.likelihood !== undefined && d.likelihood !== null) {
+        content += `<div style="margin-bottom: 4px;">${columnNames.yAxis || 'Y-Axis'}: <span style="color: #ccc;">${d.likelihood}</span></div>`;
+      }
+      
+      // Add size info
+      if (d.size !== undefined && d.size !== null) {
+        content += `<div style="margin-bottom: 4px;">Count: <span style="color: #ccc;">${d.size}</span></div>`;
+      }
+      
+      // Add risk score if available
+      if (d.risk !== undefined && d.risk !== null) {
+        content += `<div>Risk Score: <span style="color: #ccc;">${d.risk}</span></div>`;
+      }
+      
+      tooltip.html(content)
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 10) + "px");
+      
+      // Highlight bubble
+      d3.select(this)
+        .attr("stroke-width", 3)
+        .attr("stroke", "#fff");
+    })
+    .on("mouseout", function(event, d) {
+      // Hide tooltip
+      tooltip.transition()
+        .duration(500)
+        .style("opacity", 0);
+      
+      // Reset bubble style
+      d3.select(this)
+        .attr("stroke-width", 1)
+        .attr("stroke", "#000");
+    })
+    .on("mousemove", function(event, d) {
+      // Update tooltip position as mouse moves
+      tooltip
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 10) + "px");
+    });
 
   // Add labels on bubbles
   svg.selectAll(".bubble-label")
@@ -105,10 +180,6 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
     .style("fill", "#000")
     .style("pointer-events", "none")
     .text(d => d.label);
-
-  // Add tooltips
-  bubbles.append("title")
-    .text(d => `${d.label}\nLikelihood: ${d.likelihood}\nImpact: ${d.impact}\nRisks: ${d.size}\nRisk Score: ${d.risk}`);
 
   // Add axis labels
   svg.append("text")
