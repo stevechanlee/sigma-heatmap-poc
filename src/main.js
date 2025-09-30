@@ -190,23 +190,23 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text(config.y_axis_label || columnNames.yAxis || "Likelihood");
+    .text(config["Y-AXIS LABEL"] || columnNames.yAxis || "Likelihood");
 
   svg.append("text")
     .attr("transform", `translate(${width / 2}, ${height - 10})`)
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text(config.x_axis_label || columnNames.xAxis || "Impact");
+    .text(config["X-AXIS LABEL"] || columnNames.xAxis || "Impact");
 
   // Add heatmap title (only if specified by user)
-  if (config.heatmap_title) {
+  if (config["HEATMAP TITLE"]) {
     svg.append("text")
       .attr("transform", `translate(${width / 2}, 20)`)
       .style("text-anchor", "middle")
       .style("font-size", "16px")
       .style("font-weight", "bold")
-      .text(config.heatmap_title);
+      .text(config["HEATMAP TITLE"]);
   }
 
   // Notify Sigma about height changes
@@ -231,9 +231,9 @@ function BubbleHeatmapPlugin() {
     { name: "risk_score", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Risk score for opacity
     { name: "color", type: "column", source: "source" }, // Color column (hex colors)
     { name: "label", type: "column", source: "source" }, // Labels for bubbles
-    { name: "x_axis_label", type: "text" }, // X-axis label
-    { name: "y_axis_label", type: "text" }, // Y-axis label
-    { name: "heatmap_title", type: "text" }, // Heatmap title
+    { name: "X-AXIS LABEL", type: "text" }, // X-axis label
+    { name: "Y-AXIS LABEL", type: "text" }, // Y-axis label
+    { name: "HEATMAP TITLE", type: "text" }, // Heatmap title
   ]);
 
   // Get configuration and data using React Hooks

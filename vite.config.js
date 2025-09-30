@@ -12,7 +12,12 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
-    open: true
+    port: 5173, // Standard Vite port
+    host: true, // Allow external connections
+    cors: true, // Enable CORS
+    open: true,
+    headers: {
+      'X-Frame-Options': 'ALLOWALL' // Allow iframe embedding from Sigma
+    }
   }
 })
