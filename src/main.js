@@ -119,14 +119,14 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, sourceInfo = {
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text(config.y_axis_label || columnNames.yAxis || "Likelihood");
+    .text(config.y_axis_label || columnNames.yAxis);
 
   svg.append("text")
     .attr("transform", `translate(${width / 2}, ${height - 10})`)
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text(config.x_axis_label || columnNames.xAxis || "Impact");
+    .text(config.x_axis_label || columnNames.xAxis);
 
   // Add heatmap title
   svg.append("text")
@@ -200,8 +200,8 @@ function BubbleHeatmapPlugin() {
   // Render the heatmap when data changes
   useEffect(() => {
     const columnNames = {
-      xAxis: (columnInfo && columnInfo[config["x-axis"]] && columnInfo[config["x-axis"]].name) || config["x-axis"],
-      yAxis: (columnInfo && columnInfo[config["y-axis"]] && columnInfo[config["y-axis"]].name) || config["y-axis"]
+      xAxis: (columnInfo && columnInfo[config["x-axis"]] && columnInfo[config["x-axis"]].name) || config["x-axis"] || "X-Axis",
+      yAxis: (columnInfo && columnInfo[config["y-axis"]] && columnInfo[config["y-axis"]].name) || config["y-axis"] || "Y-Axis"
     };
     
     const sourceInfo = {
