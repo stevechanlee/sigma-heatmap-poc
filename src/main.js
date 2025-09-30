@@ -34,7 +34,7 @@ function renderBubbleHeatmap(data) {
     return;
   }
 
-  // Create background using CSS gradient that matches the original heatmap design
+  // Create background using the actual heatmap SVG image
   const backgroundDiv = d3.select("#heatmapContainer")
     .insert("div", "svg")
     .attr("class", "heatmap-background")
@@ -43,7 +43,10 @@ function renderBubbleHeatmap(data) {
     .style("left", margin.left + "px")
     .style("width", (width - margin.left - margin.right) + "px")
     .style("height", (height - margin.top - margin.bottom) + "px")
-    .style("background", "linear-gradient(135deg, #7ED321 0%, #A8E842 20%, #D4E842 35%, #F5E623 50%, #FFB366 65%, #FF8B66 80%, #FF6B6B 100%)")
+    .style("background-image", "url('/heatmap-bg.svg')")
+    .style("background-size", "cover")
+    .style("background-position", "center")
+    .style("background-repeat", "no-repeat")
     .style("opacity", "0.8")
     .style("z-index", "1");
 
