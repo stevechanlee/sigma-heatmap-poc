@@ -42,13 +42,6 @@ h1 {
   text-align: center;
 }
 
-.heatmap-background {
-  background-image: url('/heatmap-bg.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
 .logo {
   height: 6em;
   padding: 1.5em;
