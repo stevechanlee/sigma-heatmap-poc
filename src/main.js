@@ -205,7 +205,7 @@ function BubbleHeatmapPlugin() {
     };
     
     const sourceInfo = {
-      name: config.source || "Data"
+      name: "Data"
     };
     
     renderBubbleHeatmap(data, config, columnNames, sourceInfo);
