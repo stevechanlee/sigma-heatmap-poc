@@ -43,7 +43,7 @@ function renderBubbleHeatmap(data) {
     .style("left", margin.left + "px")
     .style("width", (width - margin.left - margin.right) + "px")
     .style("height", (height - margin.top - margin.bottom) + "px")
-    .style("background-image", "url('/heatmap-bg.svg')")
+    .style("background-image", "url('/Heatmap-bg.png')")
     .style("background-size", "cover")
     .style("background-position", "center")
     .style("background-repeat", "no-repeat")
