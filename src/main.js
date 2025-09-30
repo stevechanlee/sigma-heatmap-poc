@@ -3,7 +3,7 @@ import React, { useMemo, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { useConfig, useEditorPanelConfig, useElementColumns, useElementData } from "@sigmacomputing/plugin";
 
-function renderBubbleHeatmap(data) {
+function renderBubbleHeatmap(data, config = {}) {
   const container = d3.select("#heatmapContainer");
   container.selectAll("*").remove();
 
@@ -119,14 +119,22 @@ function renderBubbleHeatmap(data) {
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text("Average Likelihood");
+    .text(config.y_axis_label || "Average Likelihood");
 
   svg.append("text")
     .attr("transform", `translate(${width / 2}, ${height - 10})`)
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text("Average Impact");
+    .text(config.x_axis_label || "Average Impact");
+
+  // Add heatmap title
+  svg.append("text")
+    .attr("transform", `translate(${width / 2}, 20)`)
+    .style("text-anchor", "middle")
+    .style("font-size", "16px")
+    .style("font-weight", "bold")
+    .text(config.heatmap_title || "Risk Heatmap");
 
   // Notify Sigma about height changes
   queueMicrotask(() => {
@@ -144,12 +152,15 @@ function BubbleHeatmapPlugin() {
   // Configure the editor panel using React Hooks API
   useEditorPanelConfig([
     { name: "source", type: "element" },
-    { name: "likelihood", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Y-axis (likelihood/frequency)
-    { name: "impact", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // X-axis (impact/severity)  
+    { name: "y-axis", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Y-axis (likelihood/frequency)
+    { name: "x-axis", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // X-axis (impact/severity)  
     { name: "size", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Bubble size (count of risks)
     { name: "risk_score", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Risk score for opacity
     { name: "color", type: "column", source: "source" }, // Color column (hex colors)
     { name: "label", type: "column", source: "source" }, // Labels for bubbles
+    { name: "x_axis_label", type: "text", defaultValue: "Impact" }, // X-axis label
+    { name: "y_axis_label", type: "text", defaultValue: "Likelihood" }, // Y-axis label
+    { name: "heatmap_title", type: "text", defaultValue: "Risk Heatmap" }, // Heatmap title
   ]);
 
   // Get configuration and data using React Hooks
@@ -159,12 +170,12 @@ function BubbleHeatmapPlugin() {
 
   // Process the data into the format we need
   const data = useMemo(() => {
-    if (!config.likelihood || !config.impact || !config.size || !sigmaData) {
+    if (!config["y-axis"] || !config["x-axis"] || !config.size || !sigmaData) {
       return [];
     }
 
-    const likelihoodData = sigmaData[config.likelihood] || [];
-    const impactData = sigmaData[config.impact] || [];
+    const likelihoodData = sigmaData[config["y-axis"]] || [];
+    const impactData = sigmaData[config["x-axis"]] || [];
     const sizeData = sigmaData[config.size] || [];
     const riskData = sigmaData[config.risk_score] || [];
     const colorData = sigmaData[config.color] || [];
@@ -188,8 +199,8 @@ function BubbleHeatmapPlugin() {
 
   // Render the heatmap when data changes
   useEffect(() => {
-    renderBubbleHeatmap(data);
-  }, [data]);
+    renderBubbleHeatmap(data, config);
+  }, [data, config]);
 
   return null; // React component doesn't render anything directly
 }
