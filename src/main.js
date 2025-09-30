@@ -158,9 +158,9 @@ function BubbleHeatmapPlugin() {
     { name: "risk_score", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Risk score for opacity
     { name: "color", type: "column", source: "source" }, // Color column (hex colors)
     { name: "label", type: "column", source: "source" }, // Labels for bubbles
-    { name: "x_axis_label", type: "text", defaultValue: "Impact" }, // X-axis label
-    { name: "y_axis_label", type: "text", defaultValue: "Likelihood" }, // Y-axis label
-    { name: "heatmap_title", type: "text", defaultValue: "Risk Heatmap" }, // Heatmap title
+    { name: "x_axis_label", type: "text" }, // X-axis label
+    { name: "y_axis_label", type: "text" }, // Y-axis label
+    { name: "heatmap_title", type: "text" }, // Heatmap title
   ]);
 
   // Get configuration and data using React Hooks
