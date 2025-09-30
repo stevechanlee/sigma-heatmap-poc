@@ -3,7 +3,7 @@ import React, { useMemo, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { useConfig, useEditorPanelConfig, useElementColumns, useElementData } from "@sigmacomputing/plugin";
 
-function renderBubbleHeatmap(data, config = {}, columnNames = {}, sourceInfo = {}) {
+function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
   const container = d3.select("#heatmapContainer");
   container.selectAll("*").remove();
 
@@ -128,13 +128,15 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, sourceInfo = {
     .style("font-weight", "bold")
     .text(config.x_axis_label || columnNames.xAxis || "Impact");
 
-  // Add heatmap title
-  svg.append("text")
-    .attr("transform", `translate(${width / 2}, 20)`)
-    .style("text-anchor", "middle")
-    .style("font-size", "16px")
-    .style("font-weight", "bold")
-    .text(config.heatmap_title || `${sourceInfo.name || "Data"} Heatmap`);
+  // Add heatmap title (only if specified by user)
+  if (config.heatmap_title) {
+    svg.append("text")
+      .attr("transform", `translate(${width / 2}, 20)`)
+      .style("text-anchor", "middle")
+      .style("font-size", "16px")
+      .style("font-weight", "bold")
+      .text(config.heatmap_title);
+  }
 
   // Notify Sigma about height changes
   queueMicrotask(() => {
@@ -204,11 +206,7 @@ function BubbleHeatmapPlugin() {
       yAxis: (columnInfo && columnInfo[config["y-axis"]] && columnInfo[config["y-axis"]].name) || config["y-axis"]
     };
     
-    const sourceInfo = {
-      name: "Data"
-    };
-    
-    renderBubbleHeatmap(data, config, columnNames, sourceInfo);
+    renderBubbleHeatmap(data, config, columnNames);
   }, [data, config, columnInfo]);
 
   return null; // React component doesn't render anything directly
