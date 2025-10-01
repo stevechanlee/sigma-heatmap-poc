@@ -1,9 +1,41 @@
 import * as d3 from "d3";
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom/client";
-import { useConfig, useEditorPanelConfig, useElementColumns, useElementData } from "@sigmacomputing/plugin";
+import { useConfig, useEditorPanelConfig, useElementColumns, useElementData, useActionTrigger } from "@sigmacomputing/plugin";
 
-function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
+// Debounce function to prevent excessive re-renders
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Cache for the last render to prevent unnecessary DOM updates
+let renderCache = null;
+
+function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick = null) {
+  // Create a cache key to check if we need to re-render
+  const cacheKey = JSON.stringify({
+    dataLength: data.length,
+    dataHash: data.length > 0 ? JSON.stringify(data.slice(0, 3)) : '', // Sample first 3 items
+    config: config,
+    columnNames: columnNames
+  });
+  
+  // Skip rendering if nothing changed
+  if (renderCache === cacheKey) {
+    console.log('Skipping render - no changes detected');
+    return;
+  }
+  
+  console.log('Rendering bubble heatmap with data:', data);
+  renderCache = cacheKey;
   const container = d3.select("#heatmapContainer");
   container.selectAll("*").remove();
 
@@ -164,6 +196,12 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}) {
       tooltip
         .style("left", (event.pageX + 10) + "px")
         .style("top", (event.pageY - 10) + "px");
+    })
+    .on("click", function(event, d) {
+      // Trigger navigation action when bubble is clicked
+      if (onBubbleClick) {
+        onBubbleClick(d);
+      }
     });
 
   // Add labels on bubbles
@@ -234,12 +272,16 @@ function BubbleHeatmapPlugin() {
     { name: "X-AXIS LABEL", type: "text" }, // X-axis label
     { name: "Y-AXIS LABEL", type: "text" }, // Y-axis label
     { name: "HEATMAP TITLE", type: "text" }, // Heatmap title
+    { name: "navigate_to_workbook", type: "action-trigger" }, // Action trigger for navigation
   ]);
 
   // Get configuration and data using React Hooks
   const config = useConfig();
   const sigmaData = useElementData(config.source);
   const columnInfo = useElementColumns(config.source);
+  
+  // Action trigger for navigation
+  const triggerNavigation = useActionTrigger("navigate_to_workbook");
 
   // Process the data into the format we need
   const data = useMemo(() => {
@@ -270,15 +312,55 @@ function BubbleHeatmapPlugin() {
     }));
   }, [config, sigmaData]);
 
+  // Memoize column names to prevent unnecessary recalculations
+  const columnNames = useMemo(() => ({
+    xAxis: (columnInfo && columnInfo[config["x-axis"]] && columnInfo[config["x-axis"]].name) || config["x-axis"],
+    yAxis: (columnInfo && columnInfo[config["y-axis"]] && columnInfo[config["y-axis"]].name) || config["y-axis"]
+  }), [columnInfo, config]);
+
+  // Memoize the click handler to prevent recreation on every render
+  const handleBubbleClick = useCallback((bubbleData) => {
+    console.log("Bubble clicked:", bubbleData);
+    // Pass all bubble data through the action trigger
+    triggerNavigation({
+      label: bubbleData.label,
+      risk_score: bubbleData.risk,
+      impact: bubbleData.impact,
+      likelihood: bubbleData.likelihood,
+      size: bubbleData.size,
+      color: bubbleData.color
+    });
+  }, [triggerNavigation]);
+
+  // Create a debounced render function to prevent excessive re-renders
+  const debouncedRender = useCallback(
+    debounce((data, config, columnNames, handleBubbleClick) => {
+      renderBubbleHeatmap(data, config, columnNames, handleBubbleClick);
+    }, 100), // 100ms debounce
+    []
+  );
+
+  // Use ref to track last render to prevent unnecessary re-renders
+  const lastRenderRef = useRef();
+  
   // Render the heatmap when data changes
   useEffect(() => {
-    const columnNames = {
-      xAxis: (columnInfo && columnInfo[config["x-axis"]] && columnInfo[config["x-axis"]].name) || config["x-axis"],
-      yAxis: (columnInfo && columnInfo[config["y-axis"]] && columnInfo[config["y-axis"]].name) || config["y-axis"]
-    };
+    // Create a render key to check if we actually need to re-render
+    const renderKey = JSON.stringify({
+      dataLength: data.length,
+      hasXAxis: !!config["x-axis"],
+      hasYAxis: !!config["y-axis"], 
+      hasSize: !!config.size
+    });
     
-    renderBubbleHeatmap(data, config, columnNames);
-  }, [data, config, columnInfo]);
+    // Only render if something actually changed
+    if (lastRenderRef.current === renderKey) {
+      return;
+    }
+    
+    lastRenderRef.current = renderKey;
+    debouncedRender(data, config, columnNames, handleBubbleClick);
+  }, [data, config, columnNames, handleBubbleClick, debouncedRender]);
 
   return null; // React component doesn't render anything directly
 }
