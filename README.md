@@ -1,50 +1,62 @@
-# Sigma Risk Bubble Heatmap Plugin
+# Sigma Bubble Heatmap Plugin
 
-A custom bubble heatmap visualization plugin for Sigma Computing that displays data as bubbles on a gradient background for two-dimensional analysis.
+A custom bubble heatmap visualization plugin for Sigma Computing that displays data as positioned bubbles with size and color encoding, supporting optional grouping for data aggregation.
 
 ## Features
 
-🎯 **Two-Dimensional Visualization**: Plots Y-axis vs X-axis values with gradient background  
-💬 **Dynamic Tooltips**: Hover for detailed information that adapts to your column names  
-📊 **Size Encoding**: Bubble size represents count of risks or magnitude  
-🎨 **Color Coding**: Custom colors for different risk categories  
-⚡ **Opacity Weighting**: Risk scores determine visual prominence  
-🏷️ **Smart Labels**: Axis labels automatically use your column names  
-🎨 **Custom Styling**: Override labels and add titles through properties  
+🎯 **Multi-Dimensional Visualization**: Plots Y vs X values with size and color encoding  
+📊 **Grouping Support**: Optional multi-column grouping with automatic aggregation  
+💬 **Dynamic Tooltips**: Hover for detailed information that adapts to your data  
+� **Size Encoding**: Bubble size represents counts, magnitude, or other numeric values  
+🎨 **Color Coding**: Support for both categorical and continuous color mapping  
+🏷️ **Smart Labels**: Auto-generated labels for grouped or individual data points  
+⚙️ **Configurable**: Custom axis labels and chart titles  
 📱 **Responsive**: Adapts to different screen sizes  
+🔗 **Interactive**: Click bubbles to navigate to other workbooks with data context  
 
 ## Data Structure
 
 Your Sigma data should include:
 
-| Column Type | Description | Example Values |
-|-------------|-------------|----------------|
-| **Y-Axis** | Vertical positioning values | 1-5 scale |
-| **X-Axis** | Horizontal positioning values | 1-5 scale |
-| **Size** | Bubble size (count, magnitude) | 5, 17, 86 |
-| **Score** | Overall score for opacity weighting | 6.25, 11.6 |
-| **Color** | Category colors | #27B65A, #7ED321 |
-| **Label** | Category names | "Financial", "Operational" |
+| Property | Description | Required | Example Values |
+|----------|-------------|----------|----------------|
+| **Data Source** | Your data table | ✅ | Sales table, Risk data, etc. |
+| **Grouping** | Columns to group by | ❌ | Region, Category, Product |
+| **X** | Horizontal positioning | ✅ | Revenue, Impact, Performance |
+| **Y** | Vertical positioning | ✅ | Growth Rate, Likelihood, Quality |
+| **Size** | Bubble size | ✅ | Count, Volume, Investment |
+| **Color** | Color encoding | ✅ | Category, Risk Level, #FF6B6B |
 
 ## Example Data
 
 ```csv
-Y_Value,X_Value,Size,Score,Color,Label
-2.98,3.68,17,7.53,#7ED321,Access Control
-3.16,2.40,6,3.80,#27B65A,Asset Management
-3.82,3.82,25,11.61,#27B65A,Operational
-3.27,3.27,86,7.72,#27B65A,Financial
+Region,Product,Revenue,Growth_Rate,Count,Risk_Level
+North,Electronics,50000,2.5,125,Low
+North,Clothing,32000,1.8,89,Medium  
+South,Electronics,75000,3.2,200,Low
+South,Clothing,28000,1.2,67,High
 ```
 
 ## Configuration
 
 1. **Data Source**: Select your data table
-2. **Y-Axis**: Column for Y-axis positioning (vertical values)
-3. **X-Axis**: Column for X-axis positioning (horizontal values)
-4. **Size**: Column for bubble sizing (count, magnitude)
-5. **Score**: Column for opacity weighting (calculated scores)
-6. **Color**: Column with hex color codes for categories
-7. **Label**: Column with text labels for bubble identification
+2. **Grouping** (Optional): Select columns to group data by (e.g., Region + Product)
+3. **X**: Column for X-axis positioning (horizontal values)
+4. **Y**: Column for Y-axis positioning (vertical values)  
+5. **Size**: Column for bubble sizing (aggregated when grouping)
+6. **Color**: Column for color encoding (categorical or hex values)
+
+## How Grouping Works
+
+### Without Grouping
+- Each data row becomes one bubble
+- Direct positioning and sizing
+
+### With Grouping (e.g., by Region + Product)
+- Multiple rows are combined into single bubbles
+- X/Y positions are averaged within groups
+- Size values are summed across group items
+- Labels show grouped dimensions: "North | Electronics"
 
 ## Development
 

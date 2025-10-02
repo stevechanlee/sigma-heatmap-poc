@@ -265,7 +265,6 @@ function BubbleHeatmapPlugin() {
     { name: "y", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Y-axis positioning
     { name: "size", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Bubble size
     { name: "color", type: "column", source: "source" }, // Color encoding
-    { name: "label", type: "column", source: "source" }, // Labels for bubbles
     { name: "X_AXIS_LABEL", type: "text" }, // X-axis label
     { name: "Y_AXIS_LABEL", type: "text" }, // Y-axis label
     { name: "TITLE", type: "text" }, // Chart title
@@ -290,7 +289,6 @@ function BubbleHeatmapPlugin() {
     const xData = sigmaData[config.x] || [];
     const sizeData = sigmaData[config.size] || [];
     const colorData = sigmaData[config.color] || [];
-    const labelData = sigmaData[config.label] || [];
     
     // Get grouping columns data
     const groupingData = config.grouping ? 
@@ -305,19 +303,18 @@ function BubbleHeatmapPlugin() {
       xValue: Number(xData[i]) || null,
       sizeValue: Number(sizeData[i]) || 0,
       colorValue: colorData[i] || "#27B65A",
-      labelValue: String(labelData[i] || `Item ${i + 1}`),
       groupingValues: groupingData.map(group => String(group[i] || 'Unknown')),
       originalIndex: i
     }));
 
     // If no grouping, return raw data
     if (!config.grouping || groupingData.length === 0) {
-      return rawData.map(d => ({
+      return rawData.map((d, index) => ({
         yValue: d.yValue,
         xValue: d.xValue,
         size: d.sizeValue,
         color: d.colorValue,
-        label: d.labelValue
+        label: `Item ${index + 1}` // Generate simple labels
       }));
     }
 
@@ -352,7 +349,6 @@ function BubbleHeatmapPlugin() {
     console.log("Bubble clicked:", bubbleData);
     // Pass all bubble data through the action trigger
     triggerNavigation({
-      label: bubbleData.label,
       x_value: bubbleData.xValue,
       y_value: bubbleData.yValue,
       size: bubbleData.size,
