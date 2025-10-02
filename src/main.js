@@ -55,11 +55,10 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
   }
   document.getElementById("empty").style.display = "none";
 
-  // Filter out data with null values for positioning and validate data
+  // Filter out data with null values for positioning
   const validData = data.filter(d => 
-    d.yValue !== null && d.yValue !== undefined && !isNaN(d.yValue) &&
-    d.xValue !== null && d.xValue !== undefined && !isNaN(d.xValue) &&
-    d.size !== null && d.size !== undefined && !isNaN(d.size) && d.size >= 0
+    d.yValue !== null && d.yValue !== undefined && 
+    d.xValue !== null && d.xValue !== undefined
   );
 
   if (!validData.length) {
@@ -83,21 +82,17 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
     .style("opacity", "0.8")
     .style("z-index", "1");
 
-  // Create scales with safety checks
-  const maxX = d3.max(validData, d => d.xValue);
-  const maxY = d3.max(validData, d => d.yValue);
-  const maxSize = d3.max(validData, d => d.size);
-  
+  // Create scales
   const xScale = d3.scaleLinear()
-    .domain([0, (maxX || 1) + 0.5])
+    .domain([0, d3.max(validData, d => d.xValue) + 0.5])
     .range([margin.left, width - margin.right]);
 
   const yScale = d3.scaleLinear()
-    .domain([0, (maxY || 1) + 0.5])
+    .domain([0, d3.max(validData, d => d.yValue) + 0.5])
     .range([height - margin.bottom, margin.top]);
 
   const sizeScale = d3.scaleSqrt()
-    .domain([0, maxSize || 1])
+    .domain([0, d3.max(validData, d => d.size) || 1])
     .range([5, 60]);
 
   // Add X axis
@@ -287,6 +282,7 @@ function BubbleHeatmapPlugin() {
   // Process the data into the format we need with grouping support
   const processedData = useMemo(() => {
     if (!config.y || !config.x || !config.size || !sigmaData) {
+      console.log('Missing configuration or data:', { y: config.y, x: config.x, size: config.size, hasData: !!sigmaData });
       return [];
     }
 
@@ -295,10 +291,12 @@ function BubbleHeatmapPlugin() {
     const sizeData = sigmaData[config.size] || [];
     const colorData = sigmaData[config.color] || [];
     
-    // Early return if no data
-    if (yData.length === 0 || xData.length === 0 || sizeData.length === 0) {
-      return [];
-    }
+    console.log('Data lengths:', { y: yData.length, x: xData.length, size: sizeData.length });
+    console.log('Sample data:', { 
+      y: yData.slice(0, 3), 
+      x: xData.slice(0, 3), 
+      size: sizeData.slice(0, 3) 
+    });
     
     // Get grouping columns data
     const groupingData = config.grouping ? 
@@ -307,30 +305,29 @@ function BubbleHeatmapPlugin() {
 
     const len = Math.min(yData.length, xData.length, sizeData.length);
     
-    // Create raw data array with robust null handling
+    // Create raw data array with improved number parsing
     const rawData = Array.from({ length: len }, (_, i) => {
-      // Handle various null/undefined/empty values more robustly
-      const yVal = yData[i];
-      const xVal = xData[i];
-      const sizeVal = sizeData[i];
+      // More robust number parsing for decimal values
+      const parseNumber = (val) => {
+        if (val === null || val === undefined || val === '') return null;
+        const num = parseFloat(val);
+        return isNaN(num) ? null : num;
+      };
       
       return {
-        yValue: (yVal !== null && yVal !== undefined && yVal !== '' && !isNaN(Number(yVal))) ? Number(yVal) : null,
-        xValue: (xVal !== null && xVal !== undefined && xVal !== '' && !isNaN(Number(xVal))) ? Number(xVal) : null,
-        sizeValue: (sizeVal !== null && sizeVal !== undefined && sizeVal !== '' && !isNaN(Number(sizeVal))) ? Number(sizeVal) : 0,
-        colorValue: (colorData[i] && colorData[i] !== null && colorData[i] !== undefined) ? String(colorData[i]) : "#27B65A",
-        groupingValues: groupingData.map(group => {
-          const val = group[i];
-          return (val !== null && val !== undefined && val !== '') ? String(val) : 'Unknown';
-        }),
+        yValue: parseNumber(yData[i]),
+        xValue: parseNumber(xData[i]),
+        sizeValue: parseNumber(sizeData[i]) || 0,
+        colorValue: colorData[i] || "#27B65A",
+        groupingValues: groupingData.map(group => String(group[i] || 'Unknown')),
         originalIndex: i
       };
     });
 
-    // If no grouping, return raw data with null filtering
+    // If no grouping, return raw data
     if (!config.grouping || groupingData.length === 0) {
-      return rawData
-        .filter(d => d.yValue !== null && d.xValue !== null) // Filter out null positioning values
+      const result = rawData
+        .filter(d => d.yValue !== null && d.xValue !== null) // Filter out null values
         .map((d, index) => ({
           yValue: d.yValue,
           xValue: d.xValue,
@@ -338,6 +335,9 @@ function BubbleHeatmapPlugin() {
           color: d.colorValue,
           label: `Item ${index + 1}` // Generate simple labels
         }));
+      
+      console.log('Non-grouped result:', result.length, 'items');
+      return result;
     }
 
     // Group data by grouping columns
