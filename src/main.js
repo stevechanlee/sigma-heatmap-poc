@@ -42,7 +42,7 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
   const containerRect = container.node()?.getBoundingClientRect();
   const width = containerRect?.width || 800;
   const height = containerRect?.height || 600;
-  const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+  const margin = { top: 50, right: 50, bottom: 50, left: 80 };
 
   const svg = container
     .append("svg")
@@ -57,8 +57,8 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
 
   // Filter out data with null values for positioning
   const validData = data.filter(d => 
-    d.likelihood !== null && d.likelihood !== undefined && 
-    d.impact !== null && d.impact !== undefined
+    d.yValue !== null && d.yValue !== undefined && 
+    d.xValue !== null && d.xValue !== undefined
   );
 
   if (!validData.length) {
@@ -84,11 +84,11 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
 
   // Create scales
   const xScale = d3.scaleLinear()
-    .domain([0, d3.max(validData, d => d.impact) + 0.5])
+    .domain([0, d3.max(validData, d => d.xValue) + 0.5])
     .range([margin.left, width - margin.right]);
 
   const yScale = d3.scaleLinear()
-    .domain([0, d3.max(validData, d => d.likelihood) + 0.5])
+    .domain([0, d3.max(validData, d => d.yValue) + 0.5])
     .range([height - margin.bottom, margin.top]);
 
   const sizeScale = d3.scaleSqrt()
@@ -106,9 +106,6 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
     .attr("transform", `translate(${margin.left},0)`)
     .call(d3.axisLeft(yScale))
     .attr("class", "axis");
-
-  // Calculate opacity based on risk values
-  const maxRisk = d3.max(validData, d => d.risk) || 1;
 
   // Create tooltip div
   const tooltip = d3.select("body")
@@ -134,11 +131,11 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
     .data(validData)
     .join("circle")
     .attr("class", "bubble")
-    .attr("cx", d => xScale(d.impact))
-    .attr("cy", d => yScale(d.likelihood))
+    .attr("cx", d => xScale(d.xValue))
+    .attr("cy", d => yScale(d.yValue))
     .attr("r", d => sizeScale(d.size))
     .attr("fill", d => d.color || "#27B65A")
-    .attr("opacity", d => Math.max(0.4, Math.min(0.9, (d.risk || 0) / maxRisk)))
+    .attr("opacity", 0.7)
     .attr("stroke", "#000")
     .attr("stroke-width", 1)
     .style("cursor", "pointer")
@@ -152,23 +149,23 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
       let content = `<div style="font-weight: bold; margin-bottom: 8px; color: #fff;">${d.label}</div>`;
       
       // Add X-axis info
-      if (d.impact !== undefined && d.impact !== null) {
-        content += `<div style="margin-bottom: 4px;">${columnNames.xAxis || 'X-Axis'}: <span style="color: #ccc;">${d.impact}</span></div>`;
+      if (d.xValue !== undefined && d.xValue !== null) {
+        content += `<div style="margin-bottom: 4px;">${columnNames.x || 'X-Axis'}: <span style="color: #ccc;">${d.xValue.toFixed(2)}</span></div>`;
       }
       
       // Add Y-axis info  
-      if (d.likelihood !== undefined && d.likelihood !== null) {
-        content += `<div style="margin-bottom: 4px;">${columnNames.yAxis || 'Y-Axis'}: <span style="color: #ccc;">${d.likelihood}</span></div>`;
+      if (d.yValue !== undefined && d.yValue !== null) {
+        content += `<div style="margin-bottom: 4px;">${columnNames.y || 'Y-Axis'}: <span style="color: #ccc;">${d.yValue.toFixed(2)}</span></div>`;
       }
       
       // Add size info
       if (d.size !== undefined && d.size !== null) {
-        content += `<div style="margin-bottom: 4px;">Count: <span style="color: #ccc;">${d.size}</span></div>`;
+        content += `<div style="margin-bottom: 4px;">Size: <span style="color: #ccc;">${d.size}</span></div>`;
       }
       
-      // Add risk score if available
-      if (d.risk !== undefined && d.risk !== null) {
-        content += `<div>Risk Score: <span style="color: #ccc;">${d.risk}</span></div>`;
+      // Add count info for grouped data
+      if (d.count !== undefined && d.count > 1) {
+        content += `<div style="margin-bottom: 4px;">Items: <span style="color: #ccc;">${d.count}</span></div>`;
       }
       
       tooltip.html(content)
@@ -209,8 +206,8 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
     .data(validData)
     .join("text")
     .attr("class", "bubble-label")
-    .attr("x", d => xScale(d.impact))
-    .attr("y", d => yScale(d.likelihood))
+    .attr("x", d => xScale(d.xValue))
+    .attr("y", d => yScale(d.yValue))
     .attr("dy", ".35em")
     .attr("text-anchor", "middle")
     .style("font-size", "10px")
@@ -222,29 +219,29 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
   // Add axis labels
   svg.append("text")
     .attr("transform", "rotate(-90)")
-    .attr("y", 15)
+    .attr("y", 20)
     .attr("x", 0 - (height / 2))
-    .attr("dy", "1em")
+    .attr("dy", "0")
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text(config["Y-AXIS LABEL"] || columnNames.yAxis || "Likelihood");
+    .text(config["Y_AXIS_LABEL"] || columnNames.y || "Y-Axis");
 
   svg.append("text")
     .attr("transform", `translate(${width / 2}, ${height - 10})`)
     .style("text-anchor", "middle")
     .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text(config["X-AXIS LABEL"] || columnNames.xAxis || "Impact");
+    .text(config["X_AXIS_LABEL"] || columnNames.x || "X-Axis");
 
-  // Add heatmap title (only if specified by user)
-  if (config["HEATMAP TITLE"]) {
+  // Add chart title (only if specified by user)
+  if (config["TITLE"]) {
     svg.append("text")
       .attr("transform", `translate(${width / 2}, 20)`)
       .style("text-anchor", "middle")
       .style("font-size", "16px")
       .style("font-weight", "bold")
-      .text(config["HEATMAP TITLE"]);
+      .text(config["TITLE"]);
   }
 
   // Notify Sigma about height changes
@@ -262,16 +259,16 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
 function BubbleHeatmapPlugin() {
   // Configure the editor panel using React Hooks API
   useEditorPanelConfig([
-    { name: "source", type: "element" },
-    { name: "y-axis", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Y-axis (likelihood/frequency)
-    { name: "x-axis", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // X-axis (impact/severity)  
-    { name: "size", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Bubble size (count of risks)
-    { name: "risk_score", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Risk score for opacity
-    { name: "color", type: "column", source: "source" }, // Color column (hex colors)
+    { name: "source", type: "element" }, // Data Source
+    { name: "grouping", type: "column", source: "source", allowMultiple: true }, // Grouping columns (top priority)
+    { name: "x", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // X-axis positioning
+    { name: "y", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Y-axis positioning
+    { name: "size", type: "column", source: "source", allowedTypes: ["number", "integer"] }, // Bubble size
+    { name: "color", type: "column", source: "source" }, // Color encoding
     { name: "label", type: "column", source: "source" }, // Labels for bubbles
-    { name: "X-AXIS LABEL", type: "text" }, // X-axis label
-    { name: "Y-AXIS LABEL", type: "text" }, // Y-axis label
-    { name: "HEATMAP TITLE", type: "text" }, // Heatmap title
+    { name: "X_AXIS_LABEL", type: "text" }, // X-axis label
+    { name: "Y_AXIS_LABEL", type: "text" }, // Y-axis label
+    { name: "TITLE", type: "text" }, // Chart title
     { name: "navigate_to_workbook", type: "action-trigger" }, // Action trigger for navigation
   ]);
 
@@ -283,39 +280,71 @@ function BubbleHeatmapPlugin() {
   // Action trigger for navigation
   const triggerNavigation = useActionTrigger("navigate_to_workbook");
 
-  // Process the data into the format we need
-  const data = useMemo(() => {
-    if (!config["y-axis"] || !config["x-axis"] || !config.size || !sigmaData) {
+  // Process the data into the format we need with grouping support
+  const processedData = useMemo(() => {
+    if (!config.y || !config.x || !config.size || !sigmaData) {
       return [];
     }
 
-    const likelihoodData = sigmaData[config["y-axis"]] || [];
-    const impactData = sigmaData[config["x-axis"]] || [];
+    const yData = sigmaData[config.y] || [];
+    const xData = sigmaData[config.x] || [];
     const sizeData = sigmaData[config.size] || [];
-    const riskData = sigmaData[config.risk_score] || [];
     const colorData = sigmaData[config.color] || [];
     const labelData = sigmaData[config.label] || [];
-
-    const len = Math.min(
-      likelihoodData.length, 
-      impactData.length, 
-      sizeData.length
-    );
     
-    return Array.from({ length: len }, (_, i) => ({
-      likelihood: Number(likelihoodData[i]) || null,
-      impact: Number(impactData[i]) || null,
-      size: Number(sizeData[i]) || 0,
-      risk: Number(riskData[i]) || 0,
-      color: String(colorData[i] || "#27B65A"),
-      label: String(labelData[i] || `Item ${i + 1}`),
+    // Get grouping columns data
+    const groupingData = config.grouping ? 
+      (Array.isArray(config.grouping) ? config.grouping : [config.grouping]).map(col => sigmaData[col] || []) : 
+      [];
+
+    const len = Math.min(yData.length, xData.length, sizeData.length);
+    
+    // Create raw data array
+    const rawData = Array.from({ length: len }, (_, i) => ({
+      yValue: Number(yData[i]) || null,
+      xValue: Number(xData[i]) || null,
+      sizeValue: Number(sizeData[i]) || 0,
+      colorValue: colorData[i] || "#27B65A",
+      labelValue: String(labelData[i] || `Item ${i + 1}`),
+      groupingValues: groupingData.map(group => String(group[i] || 'Unknown')),
+      originalIndex: i
     }));
+
+    // If no grouping, return raw data
+    if (!config.grouping || groupingData.length === 0) {
+      return rawData.map(d => ({
+        yValue: d.yValue,
+        xValue: d.xValue,
+        size: d.sizeValue,
+        color: d.colorValue,
+        label: d.labelValue
+      }));
+    }
+
+    // Group data by grouping columns
+    const grouped = d3.group(rawData, d => d.groupingValues.join(' | '));
+    
+    // Aggregate each group
+    return Array.from(grouped, ([groupKey, groupItems]) => {
+      const validItems = groupItems.filter(d => d.yValue !== null && d.xValue !== null);
+      
+      if (validItems.length === 0) return null;
+      
+      return {
+        yValue: d3.mean(validItems, d => d.yValue), // Average Y
+        xValue: d3.mean(validItems, d => d.xValue), // Average X
+        size: d3.sum(validItems, d => d.sizeValue), // Sum of sizes
+        color: validItems[0].colorValue, // First color in group
+        label: groupKey, // Group identifier as label
+        count: validItems.length // Number of items in group
+      };
+    }).filter(d => d !== null);
   }, [config, sigmaData]);
 
   // Memoize column names to prevent unnecessary recalculations
   const columnNames = useMemo(() => ({
-    xAxis: (columnInfo && columnInfo[config["x-axis"]] && columnInfo[config["x-axis"]].name) || config["x-axis"],
-    yAxis: (columnInfo && columnInfo[config["y-axis"]] && columnInfo[config["y-axis"]].name) || config["y-axis"]
+    x: (columnInfo && columnInfo[config.x] && columnInfo[config.x].name) || config.x,
+    y: (columnInfo && columnInfo[config.y] && columnInfo[config.y].name) || config.y
   }), [columnInfo, config]);
 
   // Memoize the click handler to prevent recreation on every render
@@ -324,11 +353,11 @@ function BubbleHeatmapPlugin() {
     // Pass all bubble data through the action trigger
     triggerNavigation({
       label: bubbleData.label,
-      risk_score: bubbleData.risk,
-      impact: bubbleData.impact,
-      likelihood: bubbleData.likelihood,
+      x_value: bubbleData.xValue,
+      y_value: bubbleData.yValue,
       size: bubbleData.size,
-      color: bubbleData.color
+      color: bubbleData.color,
+      count: bubbleData.count || 1
     });
   }, [triggerNavigation]);
 
@@ -347,9 +376,9 @@ function BubbleHeatmapPlugin() {
   useEffect(() => {
     // Create a render key to check if we actually need to re-render
     const renderKey = JSON.stringify({
-      dataLength: data.length,
-      hasXAxis: !!config["x-axis"],
-      hasYAxis: !!config["y-axis"], 
+      dataLength: processedData.length,
+      hasX: !!config.x,
+      hasY: !!config.y, 
       hasSize: !!config.size
     });
     
@@ -359,8 +388,8 @@ function BubbleHeatmapPlugin() {
     }
     
     lastRenderRef.current = renderKey;
-    debouncedRender(data, config, columnNames, handleBubbleClick);
-  }, [data, config, columnNames, handleBubbleClick, debouncedRender]);
+    debouncedRender(processedData, config, columnNames, handleBubbleClick);
+  }, [processedData, config, columnNames, handleBubbleClick, debouncedRender]);
 
   return null; // React component doesn't render anything directly
 }
