@@ -55,10 +55,11 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
   }
   document.getElementById("empty").style.display = "none";
 
-  // Filter out data with null values for positioning
+  // Filter out data with null values for positioning and validate data
   const validData = data.filter(d => 
-    d.yValue !== null && d.yValue !== undefined && 
-    d.xValue !== null && d.xValue !== undefined
+    d.yValue !== null && d.yValue !== undefined && !isNaN(d.yValue) &&
+    d.xValue !== null && d.xValue !== undefined && !isNaN(d.xValue) &&
+    d.size !== null && d.size !== undefined && !isNaN(d.size) && d.size >= 0
   );
 
   if (!validData.length) {
@@ -82,17 +83,21 @@ function renderBubbleHeatmap(data, config = {}, columnNames = {}, onBubbleClick 
     .style("opacity", "0.8")
     .style("z-index", "1");
 
-  // Create scales
+  // Create scales with safety checks
+  const maxX = d3.max(validData, d => d.xValue);
+  const maxY = d3.max(validData, d => d.yValue);
+  const maxSize = d3.max(validData, d => d.size);
+  
   const xScale = d3.scaleLinear()
-    .domain([0, d3.max(validData, d => d.xValue) + 0.5])
+    .domain([0, (maxX || 1) + 0.5])
     .range([margin.left, width - margin.right]);
 
   const yScale = d3.scaleLinear()
-    .domain([0, d3.max(validData, d => d.yValue) + 0.5])
+    .domain([0, (maxY || 1) + 0.5])
     .range([height - margin.bottom, margin.top]);
 
   const sizeScale = d3.scaleSqrt()
-    .domain([0, d3.max(validData, d => d.size) || 1])
+    .domain([0, maxSize || 1])
     .range([5, 60]);
 
   // Add X axis
@@ -290,6 +295,11 @@ function BubbleHeatmapPlugin() {
     const sizeData = sigmaData[config.size] || [];
     const colorData = sigmaData[config.color] || [];
     
+    // Early return if no data
+    if (yData.length === 0 || xData.length === 0 || sizeData.length === 0) {
+      return [];
+    }
+    
     // Get grouping columns data
     const groupingData = config.grouping ? 
       (Array.isArray(config.grouping) ? config.grouping : [config.grouping]).map(col => sigmaData[col] || []) : 
@@ -297,25 +307,37 @@ function BubbleHeatmapPlugin() {
 
     const len = Math.min(yData.length, xData.length, sizeData.length);
     
-    // Create raw data array
-    const rawData = Array.from({ length: len }, (_, i) => ({
-      yValue: Number(yData[i]) || null,
-      xValue: Number(xData[i]) || null,
-      sizeValue: Number(sizeData[i]) || 0,
-      colorValue: colorData[i] || "#27B65A",
-      groupingValues: groupingData.map(group => String(group[i] || 'Unknown')),
-      originalIndex: i
-    }));
+    // Create raw data array with robust null handling
+    const rawData = Array.from({ length: len }, (_, i) => {
+      // Handle various null/undefined/empty values more robustly
+      const yVal = yData[i];
+      const xVal = xData[i];
+      const sizeVal = sizeData[i];
+      
+      return {
+        yValue: (yVal !== null && yVal !== undefined && yVal !== '' && !isNaN(Number(yVal))) ? Number(yVal) : null,
+        xValue: (xVal !== null && xVal !== undefined && xVal !== '' && !isNaN(Number(xVal))) ? Number(xVal) : null,
+        sizeValue: (sizeVal !== null && sizeVal !== undefined && sizeVal !== '' && !isNaN(Number(sizeVal))) ? Number(sizeVal) : 0,
+        colorValue: (colorData[i] && colorData[i] !== null && colorData[i] !== undefined) ? String(colorData[i]) : "#27B65A",
+        groupingValues: groupingData.map(group => {
+          const val = group[i];
+          return (val !== null && val !== undefined && val !== '') ? String(val) : 'Unknown';
+        }),
+        originalIndex: i
+      };
+    });
 
-    // If no grouping, return raw data
+    // If no grouping, return raw data with null filtering
     if (!config.grouping || groupingData.length === 0) {
-      return rawData.map((d, index) => ({
-        yValue: d.yValue,
-        xValue: d.xValue,
-        size: d.sizeValue,
-        color: d.colorValue,
-        label: `Item ${index + 1}` // Generate simple labels
-      }));
+      return rawData
+        .filter(d => d.yValue !== null && d.xValue !== null) // Filter out null positioning values
+        .map((d, index) => ({
+          yValue: d.yValue,
+          xValue: d.xValue,
+          size: d.sizeValue,
+          color: d.colorValue,
+          label: `Item ${index + 1}` // Generate simple labels
+        }));
     }
 
     // Group data by grouping columns
